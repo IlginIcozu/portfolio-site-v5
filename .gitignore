@@ -1,0 +1,19 @@
+# ── uncompressed source media (the site only uses the web/ copies) ──────────
+# visual page: original renders (web versions live in assets/visual/web/)
+assets/visual/*.mp4
+# still image originals (web versions live in assets/visual/stillImages/web/)
+assets/visual/stillImages/*.png
+# Collapse originals (site uses col-lapse-web.mp4, col-lapse-promo.mp4 + web/)
+assets/Collapse/col-lapse-2.mp4
+assets/Collapse/col·lapse - promo.mp4
+assets/Collapse/*.jpg
+assets/Collapse/*.webp
+# ExtraOrdinary original (site uses extraordinary-web.mp4)
+assets/ExtraOrdinary/ExtraOrdinary_web.mp4
+# MOPs: old background video, no longer referenced
+assets/MOPS/osc3.0.mp4
+
+# ── tooling ─────────────────────────────────────────────────────────────────
+.claude/
+home-pageartwork/.claude/
+.vscode/

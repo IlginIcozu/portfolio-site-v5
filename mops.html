@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOPs — Modular Synthesis Toolkit for TouchDesigner — Ilgın İçözü</title>
+  <meta name="description"
+    content="MOPs is a modular synthesis toolkit built entirely inside TouchDesigner — oscillators, filters, envelopes, sequencers, effects and semi-modular instruments that patch together like Eurorack modules." />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='34' fill='%23ff1a1a'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    (function () {
+      var d = document.documentElement;
+      d.classList.add("js", "is-loading");
+      try {
+        if (sessionStorage.getItem("ii-veil")) { d.classList.add("is-veiled"); sessionStorage.removeItem("ii-veil"); }
+        if (sessionStorage.getItem("ii-seen")) { d.classList.add("no-preloader"); }
+      } catch (e) { }
+    })();
+  </script>
+</head>
+
+<body data-page="mops">
+  <div class="bg-sys" aria-hidden="true"></div>
+
+  <div class="page-bgvid" aria-hidden="true">
+    <img src="assets/MOPS/osc.png" alt="" loading="eager" decoding="async" />
+    <div class="page-bgvid-overlay"></div>
+  </div>
+
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <div class="preloader-inner">
+      <span class="preloader-name mono">Ilgın İçözü</span>
+      <span class="preloader-count" data-preloader-count>00</span>
+    </div>
+  </div>
+
+  <div class="veil" aria-hidden="true">
+    <div class="veil-fill"></div>
+    <div class="veil-noise"></div>
+    <div class="veil-scan"></div>
+    <div class="veil-bar"></div>
+    <div class="veil-bar"></div>
+    <div class="veil-bar"></div>
+    <div class="veil-strip"></div>
+  </div>
+
+  <div class="progress" aria-hidden="true"><span class="progress-bar"></span></div>
+
+  <header class="site-header">
+    <a class="brand magnetic" href="index.html"><span class="brand-dot" aria-hidden="true"></span><span class="brand-name" data-text="Ilgın İçözü">Ilgın İçözü</span></a>
+    <nav class="main-nav" aria-label="Primary">
+      <a href="sound.html"><sup>01</sup><span data-scramble>Sound</span></a>
+      <a href="immersive-experience.html"><sup>02</sup><span data-scramble>Visual</span></a>
+      <a href="creative-coding.html"><sup>03</sup><span data-scramble>Code</span></a>
+      <a href="mops.html"><sup>04</sup><span data-scramble>MOPs</span></a>
+      <a href="released-music.html"><sup>05</sup><span data-scramble>Music</span></a>
+      <a href="about-contact.html"><sup>06</sup><span data-scramble>About</span></a>
+    </nav>
+    <button class="menu-toggle mono" id="menu-toggle" aria-expanded="false" aria-controls="menu-overlay">Menu</button>
+  </header>
+
+  <div class="menu-overlay" id="menu-overlay" aria-hidden="true">
+    <nav class="menu-nav" aria-label="Menu">
+      <a href="sound.html"><sup>01</sup>New Media Sound &amp; Music</a>
+      <a href="immersive-experience.html"><sup>02</sup>Visual Content Creation</a>
+      <a href="creative-coding.html"><sup>03</sup>Creative Coding</a>
+      <a href="mops.html"><sup>04</sup>MOPs — Modular Operators</a>
+      <a href="released-music.html"><sup>05</sup>Released Music &amp; Experiments</a>
+      <a href="about-contact.html"><sup>06</sup>About &amp; Contact</a>
+    </nav>
+    <div class="menu-foot mono">
+      <a href="https://www.instagram.com/ilginicozu" target="_blank" rel="noopener noreferrer">Instagram</a>
+      <a href="https://x.com/dist_cs" target="_blank" rel="noopener noreferrer">X</a>
+      <a href="https://ilginicozu.bandcamp.com" target="_blank" rel="noopener noreferrer">Bandcamp</a>
+      <a href="https://ilginicozu.xyz" target="_blank" rel="noopener noreferrer">ilginicozu.xyz</a>
+    </div>
+  </div>
+
+  <div id="page">
+    <main id="top">
+
+      <!-- ── hero: what it is + get it ─────────────────────────────────── -->
+      <section class="page-hero wrap mops-hero">
+        <h1 class="mops-logo" data-intro-fade>
+          <img src="assets/MOPS/mops-lockup.png"
+            alt="MOPs, Modular Operators" width="646" height="485" decoding="async" />
+        </h1>
+        <p class="mops-tagline" data-intro-fade>A modular synthesis toolkit built entirely inside
+          TouchDesigner. Audio operators that patch together like Eurorack modules.</p>
+        <span class="mops-version mono" data-intro-fade>v0.1.0 Beta</span>
+        <div class="mops-actions" data-intro-fade>
+          <a class="btn btn--primary mono" href="https://www.patreon.com/c/ilginicozu" target="_blank"
+            rel="noopener noreferrer">Get MOPs on Patreon ↗</a>
+          <a class="btn mono" href="#docs">Documentation ↓</a>
+        </div>
+        <div class="page-rule" data-intro-rule></div>
+      </section>
+
+      <!-- ── what is MOPs ──────────────────────────────────────────────── -->
+      <section class="section-block wrap" id="mops-about">
+        <div class="section-head">
+          <h2 data-split>What is MOPs</h2>
+          <span class="section-count mono" data-reveal>Toolkit</span>
+        </div>
+        <div class="about-copy" data-reveal>
+          <p>
+            <strong>MOPs</strong> is a modular synthesis toolkit built entirely inside TouchDesigner.
+            MOPs is a growing family of audio operators that work like Eurorack modules: oscillators,
+            filters, envelopes, sequencers, effects, and semi-modular instruments that you patch
+            together to build sound from the ground up. Everything lives natively in TouchDesigner,
+            designed to create sound design or music that speaks the same language as your visuals.
+          </p>
+          <p>
+            The idea is to make digital synthesis approachable for anyone curious about sound, without
+            sacrificing the depth that lets it grow with you. Start with a single voice and a few patch
+            cables, or dig in and build a full modular rack. And because it's TouchDesigner, MOPs
+            reaches for things only possible here: visual-input operators that turn shapes and textures
+            into sequences and waveforms.
+          </p>
+        </div>
+      </section>
+
+      <!-- ── showcase ──────────────────────────────────────────────────── -->
+      <section class="section-block wrap" id="mops-showcase">
+        <div class="section-head">
+          <h2 data-split>Showcase</h2>
+          <span class="section-count mono" data-reveal>04 videos</span>
+        </div>
+        <div class="showcase-grid" data-reveal>
+          <figure class="showcase-vid">
+            <video src="assets/MOPS/promo2.mp4" controls playsinline preload="metadata"></video>
+            <figcaption class="mono">[ Sound design and sequencing ]</figcaption>
+          </figure>
+          <figure class="showcase-vid">
+            <video src="assets/MOPS/promo3.mp4" controls playsinline preload="metadata"></video>
+            <figcaption class="mono">[ Wavetable and control data ]</figcaption>
+          </figure>
+          <figure class="showcase-vid">
+            <video src="assets/MOPS/promo4.mp4" controls playsinline preload="metadata"></video>
+            <figcaption class="mono">[ Performing live ]</figcaption>
+          </figure>
+          <figure class="showcase-vid">
+            <video src="assets/MOPS/promo6.mp4" controls playsinline preload="metadata"></video>
+            <figcaption class="mono">[ Sound design and sequencing made with POPs ]</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ── documentation ─────────────────────────────────────────────── -->
+      <section class="section-block wrap" id="docs" style="scroll-margin-top: 5.5rem;">
+        <div class="section-head">
+          <h2 data-split>Documentation</h2>
+          <span class="section-count mono" data-reveal>v0.1.0 Beta</span>
+        </div>
+
+        <p class="docs-note" data-reveal>
+          This version is a <strong>beta build</strong>, released to gather feedback ahead of the
+          official launch. Expect rough edges, and please share anything you run into.
+        </p>
+
+        <div class="acc" data-reveal>
+
+          <div class="acc-item">
+            <button class="acc-head" type="button" data-acc aria-expanded="false">
+              <span class="acc-no mono">01</span>
+              <span class="acc-title">Getting started</span>
+              <span class="acc-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="acc-body">
+              <div class="acc-inner project-text">
+                <p>Drag and drop the .tox file into your project's root, then click <strong>Install</strong>
+                  in the Family tab. MOPs is built with
+                  <a href="https://github.com/dotsimulate/TDFam" target="_blank" rel="noopener noreferrer">TDFam</a>,
+                  an open-source TouchDesigner operator-family framework created by Lyell Hintz /
+                  dotsimulate and Dan Molnar / function.str.</p>
+                <p>Once loaded, you can start building your first sound patch. Worked examples are
+                  provided in <strong>examples.toe</strong>, included with MOPs v0.1.0.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <button class="acc-head" type="button" data-acc aria-expanded="false">
+              <span class="acc-no mono">02</span>
+              <span class="acc-title">Important concepts</span>
+              <span class="acc-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="acc-body">
+              <div class="acc-inner project-text">
+                <p>A few things to know before you start patching.</p>
+                <h4>Why "CD" (Control Data) and not "CV"?</h4>
+                <p>In Eurorack, modulation is carried by control voltage, an actual electrical voltage
+                  moving through a patch cable. Nothing in TouchDesigner is a voltage. Everything here
+                  is data: channels of numbers flowing between operators. So "control voltage" would
+                  borrow a name that doesn't describe what's actually happening, while "Control Data"
+                  does. It keeps the familiar modular concept of one signal shaping another, but names
+                  it in terms that make sense inside TouchDesigner, where data, not voltage, is the
+                  thing you're patching.</p>
+                <h4>Audio and control data are kept separate</h4>
+                <p>MOPs distinguish two kinds of signal: <strong>audio</strong> (the sound you hear) and
+                  <strong>control data</strong> (modulation, CD, gates, clocks that shape the sound).
+                  There are three cues that tell you which is which, any one of which is enough:</p>
+                <ol>
+                  <li><strong>Color.</strong> Control data is red (red inputs, red outputs, red
+                    operators). Audio is white (white inputs, white outputs, white operators).</li>
+                  <li><strong>Port labels.</strong> Every input or output that carries control data has
+                    <strong>"cd" in its label</strong> (CD stands for <strong>Control Data</strong>).
+                    If you see "cd" on a port, it's control data, not audio. Think of a CD connection
+                    as a CHOP reference to a specific parameter, except it happens by wiring the ins
+                    and outs rather than by writing an expression.</li>
+                  <li><strong>Operator shade.</strong> In the operator window, the <strong>audio
+                    operators are slightly darker</strong> than the control-data ones.</li>
+                </ol>
+                <h4>Use only one audio out</h4>
+                <p>Don't scatter multiple audio-out operators across your patch. Sum your different
+                  sounds first, by running them through a <strong>Creative Mixer</strong> or a
+                  <strong>4-channel Mixer</strong>, then send that single mixed signal to one audio
+                  out.</p>
+                <p><strong>If you hear nothing, check the audio out first.</strong> Most "no sound"
+                  cases come down to the audio out being inactive or turned down. Confirm it's active
+                  and the volume is up before looking anywhere else.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <button class="acc-head" type="button" data-acc aria-expanded="false">
+              <span class="acc-no mono">03</span>
+              <span class="acc-title">Examples</span>
+              <span class="acc-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="acc-body">
+              <div class="acc-inner project-text">
+                <p>The following patches are included in examples.toe:</p>
+                <ol>
+                  <li><strong>Simple step-sequenced Oscillator → Amplitude → lowpass Filter.</strong>
+                    A sequencer driving a single voice through amplitude and filter shaping.</li>
+                  <li><strong>Keyboard into Wavetable OSC.</strong> Playing a wavetable oscillator from
+                    keyboard input.</li>
+                  <li><strong>4 Oscillators / 4 phased LFO mixing.</strong> Four oscillators modulated
+                    by four phase-offset LFOs, summed through a mixer.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <button class="acc-head" type="button" data-acc aria-expanded="false">
+              <span class="acc-no mono">04</span>
+              <span class="acc-title">Known bugs</span>
+              <span class="acc-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="acc-body">
+              <div class="acc-inner project-text">
+                <ul>
+                  <li><strong>Kick velocity input</strong> doesn't work properly yet.</li>
+                  <li><strong>Reverb</strong> doesn't work properly. It sounds good on short sounds,
+                    but breaks down on longer or sustained signals.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <button class="acc-head" type="button" data-acc aria-expanded="false">
+              <span class="acc-no mono">05</span>
+              <span class="acc-title">Known issues</span>
+              <span class="acc-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="acc-body">
+              <div class="acc-inner project-text">
+                <ul>
+                  <li><strong>Rendering operators can cause FPS drops.</strong> If the operator viewer
+                    is rendering and your frame rate drops, close the viewer or use the CHOPViewer
+                    parameter on the Viewer page to toggle to the traditional CHOP viewer.</li>
+                  <li><strong>FPS drops can shift the pitch, and this is normal.</strong> Audio in MOPs
+                    is tied to the frame rate, so an unstable FPS changes pitch. Keep your project at a
+                    fixed FPS to avoid this. Be aware that lowering the FPS lowers the pitch: going
+                    from 60 to 30 FPS drops every audio operator by one octave.</li>
+                  <li><strong>Multiple step sequencers on the same clock can drift out of sync.</strong>
+                    When several step sequencers share the same clock (or clock divider), one or more
+                    of them can gradually drift so they're no longer on the same step. To realign them,
+                    select all the sequencers and trigger their manual reset at the same time, which
+                    snaps them back to a common step. For an automatic fix, send a clock signal into
+                    each sequencer's reset input so they re-sync on every reset pulse.</li>
+                  <li><strong>POPs Sequencer</strong> and <strong>POPs Oscillator</strong> are
+                    experimental; they are subject to changes in the future.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <button class="acc-head" type="button" data-acc aria-expanded="false">
+              <span class="acc-no mono">06</span>
+              <span class="acc-title">Future improvements</span>
+              <span class="acc-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="acc-body">
+              <div class="acc-inner project-text">
+                <p>Where MOPs is headed:</p>
+                <ul>
+                  <li><strong>More semi-modular paths.</strong> Pre-wired instrument operators, so you
+                    can start making sound right away without building a complex patch.</li>
+                  <li><strong>POPs and TOPs inputs.</strong> More operators that take POPs or TOPs as
+                    input to generate control data or audio.</li>
+                  <li><strong>Full documentation.</strong> Per-operator documentation and a complete
+                    family reference.</li>
+                  <li><strong>Updated operator descriptions.</strong></li>
+                  <li><strong>Operator viewer rendering choice.</strong> A toggle between POP rendering
+                    and native CHOP rendering for the operator viewer.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="acc-item">
+            <button class="acc-head" type="button" data-acc aria-expanded="false">
+              <span class="acc-no mono">07</span>
+              <span class="acc-title">Feedback</span>
+              <span class="acc-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="acc-body">
+              <div class="acc-inner project-text">
+                <p>Please send any feedback or recommendations through:</p>
+                <ul>
+                  <li>Patreon: <a href="https://www.patreon.com/c/ilginicozu" target="_blank"
+                      rel="noopener noreferrer">patreon.com/c/ilginicozu</a></li>
+                  <li>Instagram: <a href="https://instagram.com/ilginicozu" target="_blank"
+                      rel="noopener noreferrer">@ilginicozu</a></li>
+                  <li>Email: <a href="mailto:ilginicozu@gmail.com">ilginicozu@gmail.com</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── get it ────────────────────────────────────────────────────── -->
+      <section class="section-block wrap mops-cta" id="get-mops">
+        <img class="mops-cta-icon" src="assets/MOPS/mops-icon.svg" alt="" width="232" height="116"
+          loading="lazy" decoding="async" />
+        <a class="btn btn--primary mono" href="https://www.patreon.com/c/ilginicozu" target="_blank"
+          rel="noopener noreferrer" data-reveal>Get MOPs on Patreon ↗</a>
+      </section>
+    </main>
+
+    <a class="next-page" href="released-music.html">
+      <span class="next-label mono" data-reveal>[ Next / 05 ]</span>
+      <span class="next-title" data-split>Released Music &amp; Experiments</span>
+      <span class="next-arrow" aria-hidden="true">⟶</span>
+    </a>
+
+  </div>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="cursor" aria-hidden="true">
+    <div class="cursor-trail cursor-trail--r"></div>
+    <div class="cursor-trail cursor-trail--c"></div>
+    <div class="cursor-ring"><span class="cursor-label mono"></span></div>
+    <div class="cursor-dot"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

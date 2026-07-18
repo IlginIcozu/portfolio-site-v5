@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ilgın İçözü — New Media Sound Design &amp; Music</title>
+  <meta name="description"
+    content="Portfolio of Ilgın İçözü — new media sound design, visual content creation, creative coding, MOPs (a modular synthesis toolkit for TouchDesigner), and selected works." />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='34' fill='%23ff1a1a'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    (function () {
+      var d = document.documentElement;
+      d.classList.add("js", "is-loading");
+      try {
+        if (sessionStorage.getItem("ii-veil")) { d.classList.add("is-veiled"); sessionStorage.removeItem("ii-veil"); }
+        if (sessionStorage.getItem("ii-seen")) { d.classList.add("no-preloader"); }
+      } catch (e) { }
+    })();
+  </script>
+</head>
+
+<body data-page="patch">
+  <div class="bg-sys" aria-hidden="true"></div>
+
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <div class="preloader-inner">
+      <span class="preloader-name mono">Ilgın İçözü</span>
+      <span class="preloader-count" data-preloader-count>00</span>
+    </div>
+  </div>
+
+  <div class="veil" aria-hidden="true">
+    <div class="veil-fill"></div>
+    <div class="veil-noise"></div>
+    <div class="veil-scan"></div>
+    <div class="veil-bar"></div>
+    <div class="veil-bar"></div>
+    <div class="veil-bar"></div>
+    <div class="veil-strip"></div>
+  </div>
+
+  <header class="site-header">
+    <a class="brand magnetic" href="index.html"><span class="brand-dot" aria-hidden="true"></span><span class="brand-name" data-text="Ilgın İçözü">Ilgın İçözü</span></a>
+    <nav class="main-nav" aria-label="Primary">
+      <a href="sound.html"><sup>01</sup><span data-scramble>Sound</span></a>
+      <a href="immersive-experience.html"><sup>02</sup><span data-scramble>Visual</span></a>
+      <a href="creative-coding.html"><sup>03</sup><span data-scramble>Code</span></a>
+      <a href="mops.html"><sup>04</sup><span data-scramble>MOPs</span></a>
+      <a href="released-music.html"><sup>05</sup><span data-scramble>Music</span></a>
+      <a href="about-contact.html"><sup>06</sup><span data-scramble>About</span></a>
+    </nav>
+    <button class="menu-toggle mono" id="menu-toggle" aria-expanded="false" aria-controls="menu-overlay">Menu</button>
+  </header>
+
+  <div class="menu-overlay" id="menu-overlay" aria-hidden="true">
+    <nav class="menu-nav" aria-label="Menu">
+      <a href="sound.html"><sup>01</sup>New Media Sound &amp; Music</a>
+      <a href="immersive-experience.html"><sup>02</sup>Visual Content Creation</a>
+      <a href="creative-coding.html"><sup>03</sup>Creative Coding</a>
+      <a href="mops.html"><sup>04</sup>MOPs — Modular Operators</a>
+      <a href="released-music.html"><sup>05</sup>Released Music &amp; Experiments</a>
+      <a href="about-contact.html"><sup>06</sup>About &amp; Contact</a>
+    </nav>
+    <div class="menu-foot mono">
+      <a href="https://www.instagram.com/ilginicozu" target="_blank" rel="noopener noreferrer">Instagram</a>
+      <a href="https://x.com/dist_cs" target="_blank" rel="noopener noreferrer">X</a>
+      <a href="https://ilginicozu.bandcamp.com" target="_blank" rel="noopener noreferrer">Bandcamp</a>
+      <a href="https://ilginicozu.xyz" target="_blank" rel="noopener noreferrer">ilginicozu.xyz</a>
+    </div>
+  </div>
+
+  <div id="page">
+    <main id="top" class="patch">
+      <!-- Home background: the interactive three.js noise-terrain artwork.
+           src is filled by initHomeArt() in js/app.js (skipped under
+           prefers-reduced-motion). The Vimeo-film rotation (initHomeBgSwap +
+           HOME_BG_IDS) and the xyz-bg code sketch are parked, not deleted —
+           to bring either back, point this iframe at the desired source. -->
+      <div class="hero-bg" aria-hidden="true">
+        <iframe class="hero-art" data-art-bg="home-pageartwork/index.html" src="about:blank"
+          title="" loading="eager" scrolling="no" tabindex="-1"></iframe>
+        <div class="hero-bg-overlay"></div>
+      </div>
+
+      <div class="patch-wordmark">
+        <h1 class="patch-title" aria-label="Ilgın İçözü">
+          <span data-split-intro>Ilgın</span>
+          <span class="patch-title-ghost" data-split-intro>İçözü</span>
+        </h1>
+        <p class="patch-tag" data-intro-fade>
+          Multi-media artist. Multisensory experiences that connect sound, image, space, and interaction.
+        </p>
+        <div class="patch-links mono" data-intro-fade>
+          <span class="patch-start">Click to start the sound</span>
+          <a href="about-contact.html#contact">Get in touch</a>
+        </div>
+      </div>
+
+      <div class="sig-stage">
+        <canvas aria-hidden="true"></canvas>
+        <nav aria-label="Site menu">
+          <a class="cue cue--up" href="sound.html" style="--cue:#ff1a1a" data-t="0.10">
+            <span class="cue-card">
+              <span class="cue-idx mono">01 / SND</span>
+              <span class="cue-name">Sound Design &amp; Music</span>
+              <span class="cue-meta mono">10 works</span>
+            </span>
+            <span class="cue-tick" aria-hidden="true"></span>
+            <span class="cue-dot" aria-hidden="true"></span>
+          </a>
+
+          <a class="cue cue--down" href="immersive-experience.html" style="--cue:#ff3524" data-t="0.34">
+            <span class="cue-card">
+              <span class="cue-idx mono">02 / VIS</span>
+              <span class="cue-name">Visual Content Creation</span>
+              <span class="cue-meta mono">02 works</span>
+            </span>
+            <span class="cue-tick" aria-hidden="true"></span>
+            <span class="cue-dot" aria-hidden="true"></span>
+          </a>
+
+          <a class="cue cue--up" href="creative-coding.html" style="--cue:#f21334" data-t="0.48">
+            <span class="cue-card">
+              <span class="cue-idx mono">03 / CDE</span>
+              <span class="cue-name">Creative Coding</span>
+              <span class="cue-meta mono">04 works</span>
+            </span>
+            <span class="cue-tick" aria-hidden="true"></span>
+            <span class="cue-dot" aria-hidden="true"></span>
+          </a>
+
+          <a class="cue cue--down" href="mops.html" style="--cue:#ff4a30" data-t="0.62">
+            <span class="cue-card">
+              <span class="cue-idx mono">04 / MOP</span>
+              <span class="cue-name">MOPs — Modular Operators</span>
+              <span class="cue-meta mono">Toolkit</span>
+            </span>
+            <span class="cue-tick" aria-hidden="true"></span>
+            <span class="cue-dot" aria-hidden="true"></span>
+          </a>
+
+          <a class="cue cue--up" href="released-music.html" style="--cue:#e01226" data-t="0.76">
+            <span class="cue-card">
+              <span class="cue-idx mono">05 / MUS</span>
+              <span class="cue-name">Released Music</span>
+              <span class="cue-meta mono">06 releases</span>
+            </span>
+            <span class="cue-tick" aria-hidden="true"></span>
+            <span class="cue-dot" aria-hidden="true"></span>
+          </a>
+
+          <a class="cue cue--down" href="about-contact.html" style="--cue:#ff2e4d" data-t="0.90">
+            <span class="cue-card">
+              <span class="cue-idx mono">06 / ABT</span>
+              <span class="cue-name">About &amp; Contact</span>
+              <span class="cue-meta mono">Say hi</span>
+            </span>
+            <span class="cue-tick" aria-hidden="true"></span>
+            <span class="cue-dot" aria-hidden="true"></span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="patch-fallback">
+        <nav class="dir-list" aria-label="Site menu">
+          <a class="dir-row" href="sound.html">
+            <span class="dir-no mono">01</span>
+            <span class="dir-name">Sound Design &amp; Music</span>
+            <span class="dir-meta mono">10 works</span>
+            <span class="dir-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="dir-row" href="immersive-experience.html">
+            <span class="dir-no mono">02</span>
+            <span class="dir-name">Visual Content Creation</span>
+            <span class="dir-meta mono">02 works</span>
+            <span class="dir-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="dir-row" href="creative-coding.html">
+            <span class="dir-no mono">03</span>
+            <span class="dir-name">Creative Coding</span>
+            <span class="dir-meta mono">04 works</span>
+            <span class="dir-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="dir-row" href="mops.html">
+            <span class="dir-no mono">04</span>
+            <span class="dir-name">MOPs — Modular Operators</span>
+            <span class="dir-meta mono">Toolkit</span>
+            <span class="dir-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="dir-row" href="released-music.html">
+            <span class="dir-no mono">05</span>
+            <span class="dir-name">Released Music &amp; Experiments</span>
+            <span class="dir-meta mono">06 releases</span>
+            <span class="dir-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="dir-row" href="about-contact.html">
+            <span class="dir-no mono">06</span>
+            <span class="dir-name">About &amp; Contact</span>
+            <span class="dir-meta mono">Bio / CV / Links</span>
+            <span class="dir-arrow" aria-hidden="true">→</span>
+          </a>
+        </nav>
+      </div>
+    </main>
+  </div>
+
+
+  <button class="art-mute is-muted" type="button" data-art-mute aria-pressed="true" aria-label="Toggle artwork sound">
+    <svg viewBox="0 0 40 40" aria-hidden="true">
+      <circle class="art-mute-ring" cx="20" cy="20" r="18" />
+      <path class="art-mute-spk" d="M13 16.5 H16.5 L21 12.5 V27.5 L16.5 23.5 H13 Z" />
+      <g class="art-mute-waves">
+        <path d="M24.5 15.5 Q27.5 20 24.5 24.5" />
+        <path d="M27.5 13 Q32 20 27.5 27" />
+      </g>
+      <line class="art-mute-slash" x1="12" y1="28" x2="28" y2="12" />
+    </svg>
+  </button>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="cursor" aria-hidden="true">
+    <div class="cursor-trail cursor-trail--r"></div>
+    <div class="cursor-trail cursor-trail--c"></div>
+    <div class="cursor-ring"><span class="cursor-label mono"></span></div>
+    <div class="cursor-dot"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

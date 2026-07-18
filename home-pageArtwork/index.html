@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>noise terrain particles</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; overflow: hidden; background: #000; cursor: none;
+      touch-action: none; overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    canvas { display: block; }
+    /* mouse coordinate crosshair (movie-style) */
+    #cross-v, #cross-h {
+      position: fixed; top: 0; left: 0;
+      background: rgba(255, 0, 0, 0.75);
+      pointer-events: none; z-index: 10;
+      will-change: transform;
+    }
+    #cross-v { width: 1px; height: 100vh; }
+    #cross-h { width: 100vw; height: 1px; }
+    #coord, #soundstate {
+      position: fixed; top: 0; left: 0;
+      color: #fff; font: 10px/1.4 monospace; letter-spacing: 0.08em;
+      pointer-events: none; z-index: 11;
+      will-change: transform;
+      white-space: nowrap;
+      /* invert against whatever is underneath: white over points -> black */
+      mix-blend-mode: difference;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="cross-v" hidden></div>
+  <div id="cross-h" hidden></div>
+  <div id="coord" hidden></div>
+  <div id="soundstate" hidden></div>
+  <script type="module">
+    import * as THREE from 'three';
+
+    // ------------------------------------------------------------ camera
+    // fixed camera — edit these to frame the shot
+    const CAMERA = {
+      fov: 55,
+      position: [0, 16, 46],
+      lookAt:   [0, -16, 0],
+    };
+
+    // slight camera tilt following the pointer (degrees at the screen edges)
+    const TILT = { x: 2.0, y: 1.5 };
+
+    // ------------------------------------------------------------ config
+    // coarse pointer = phone/tablet: lighter grid + lower pixel ratio,
+    // desktop keeps the full resolution
+    const IS_MOBILE = window.matchMedia('(pointer: coarse)').matches;
+
+    const SIZE   = 100;   // world units of the grid
+    const COUNT  = IS_MOBILE ? 600 : 1200;  // points per side
+    const JITTER = 0.95;   // random xz offset, in fractions of grid spacing
+    // every click re-rolls jitter in [min, max]; bias < 1 skews toward max
+    const JITTER_ROLL = { min: 0.1, max: 0.95, bias: 0.35 };
+
+    // mouse hover displaces a round area (screen-space)
+    const MOUSE = {
+      radius: 0.22,  // area size in NDC units (1 = half the screen)
+      lift:   2.4,   // how far particles are pushed up
+    };
+
+    // autonomous scan sweeps
+    const SCAN = {
+      minWait: 2.5,  // seconds between sweeps
+      maxWait: 8.0,
+      minDur:  0.75,  // sweep duration
+      maxDur:  3.0,
+    };
+
+    // click flash: canvas is color-inverted for `ms`; while inverted the
+    // multipliers below are applied, so you can shape how dark the flash is
+    // (bigger/brighter points -> more black in the inverted frame)
+    const FLASH = {
+      ms: 220,
+      brightness: 2.0,   // uBrightness multiplier during the flash
+      pointSize:  1.3,   // uPointSize multiplier during the flash
+      fog:        0.6,   // uFogDensity multiplier (lower = more lit = more black inverted)
+    };
+
+    // ---------------------------------------------------------------- scene
+    const renderer = new THREE.WebGLRenderer({ antialias: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_MOBILE ? 1.5 : 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
+    const camera = new THREE.PerspectiveCamera(CAMERA.fov, window.innerWidth / window.innerHeight, 0.1, 400);
+    camera.position.set(...CAMERA.position);
+    camera.lookAt(...CAMERA.lookAt);
+    const cameraBaseQuat = camera.quaternion.clone();  // tilt pivots around this
+
+    // ------------------------------------------------------------ particles
+    // flat grid on XZ (with random jitter), heights are computed in the vertex shader
+    const total = COUNT * COUNT;
+    const positions = new Float32Array(total * 3);
+    const jitters = new Float32Array(total * 2);
+    const rands = new Float32Array(total);
+    const spacing = SIZE / (COUNT - 1);
+    let i = 0;
+    for (let x = 0; x < COUNT; x++) {
+      for (let z = 0; z < COUNT; z++) {
+        positions[i * 3 + 0] = (x / (COUNT - 1) - 0.5) * SIZE;
+        positions[i * 3 + 1] = 0;
+        positions[i * 3 + 2] = (z / (COUNT - 1) - 0.5) * SIZE;
+        // offset direction is baked; the amount is scaled live by uJitter
+        jitters[i * 2 + 0] = (Math.random() - 0.5) * spacing;
+        jitters[i * 2 + 1] = (Math.random() - 0.5) * spacing;
+        rands[i] = Math.random();
+        i++;
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('aJitter', new THREE.BufferAttribute(jitters, 2));
+    geometry.setAttribute('aRand', new THREE.BufferAttribute(rands, 1));
+    geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), SIZE);
+
+    let r = Math.random() * 0.05 + 0.04  //0.015,0.065
+    console.log(r)
+
+    const uniforms = {
+      uTime:        { value: 0 },
+      uAmplitude:   { value: Math.random() * 3.0 + 6.0},   // overall height of the ridges
+      uFrequency:   { value: r}, // noise scale
+      uSpeed:       { value: 0.18 },  // animation speed
+      uRidge:       { value: 0.05 },   // 0 = soft water swells, 1 = pointy ridges
+      uWarp:        { value: Math.random() * 0.595 + 0.05 },   // domain warp -> curly, swirling ridges//0.05,0.6
+      uSeaBlend:    { value: Math.random() },   // 0 = all organic/curly, 1 = all sea swells
+      uPointSize:   { value: 1.9 },
+      uPointMax:    { value: 1.8 },   // px ceiling for point size (flash scales it)
+      uLightPos:    { value: new THREE.Vector3(0, 9, 42) },
+      uLightRadius: { value: 46.0 },  // falloff radius of the "pool of light"
+      uFogDensity:  { value: 0.016 },
+      uBrightness:  { value: 1.9 },
+      // mouse scan line (screen space)
+      uScanPos:     { value: 0.0 },   // NDC coord of the line, smoothed
+      uScanAxis:    { value: 0.0 },   // 0 = vertical line (follows mouse x), 1 = horizontal
+      uScanAmp:     { value: 0.0 },   // driven by the sweep animation (0 = hidden)
+      uScanWidth:   { value: 0.255 }, // band thickness in NDC
+      uScanLift:    { value: 1.3 },   // how far particles are pushed up
+      // mouse hover area (screen space)
+      uMouse:       { value: new THREE.Vector2(0, 0) },
+      uMouseAmp:    { value: 0.0 },
+      uMouseRadius: { value: MOUSE.radius },
+      uMouseLift:   { value: MOUSE.lift },
+      uAspect:      { value: window.innerWidth / window.innerHeight },
+      // noise seed, re-rolled on click
+      uSeed:        { value: Math.random() * 100 },
+      // jitter amount, re-rolled on click
+      uJitter:      { value: JITTER },
+    };
+
+    // re-roll the generative variables (same formulas as the refresh setup)
+    function rollGenerative() {
+      r = Math.random() * 0.05 + 0.04  //0.015,0.065
+      console.log(r)
+      uniforms.uFrequency.value = r;
+      uniforms.uAmplitude.value = Math.random() * 3.0 + 6.0;
+      uniforms.uWarp.value      = Math.random() * 0.595 + 0.05; //0.05,0.6
+      uniforms.uSeaBlend.value  = Math.random();
+      uniforms.uScanLift.value  = Math.random() * 1.3 + 1.0;
+      uniforms.uSeed.value      = Math.random() * 100;
+      // jitter in [min, max], skewed toward max by the bias exponent
+      uniforms.uJitter.value = JITTER_ROLL.min
+        + (JITTER_ROLL.max - JITTER_ROLL.min) * Math.pow(Math.random(), JITTER_ROLL.bias);
+    }
+
+    const vertexShader = /* glsl */`
+      uniform float uTime;
+      uniform float uAmplitude;
+      uniform float uFrequency;
+      uniform float uSpeed;
+      uniform float uRidge;
+      uniform float uWarp;
+      uniform float uSeaBlend;
+      uniform float uPointSize;
+      uniform float uPointMax;
+      uniform vec3  uLightPos;
+      uniform float uLightRadius;
+      uniform float uFogDensity;
+      uniform float uBrightness;
+      uniform float uScanPos;
+      uniform float uScanAxis;
+      uniform float uScanAmp;
+      uniform float uScanWidth;
+      uniform float uScanLift;
+      uniform vec2  uMouse;
+      uniform float uMouseAmp;
+      uniform float uMouseRadius;
+      uniform float uMouseLift;
+      uniform float uAspect;
+      uniform float uSeed;
+      uniform float uJitter;
+
+      attribute vec2 aJitter;
+      attribute float aRand;
+
+      varying float vShade;
+
+      // --- simplex noise (Ashima / Ian McEwan) -------------------------
+      vec3 mod289(vec3 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+      vec2 mod289(vec2 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+      vec3 permute(vec3 x){ return mod289(((x*34.0)+10.0)*x); }
+      float snoise(vec2 v){
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                           -0.577350269189626, 0.024390243902439);
+        vec2 i  = floor(v + dot(v, C.yy));
+        vec2 x0 = v -   i + dot(i, C.xx);
+        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod289(i);
+        vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+                                 + i.x + vec3(0.0, i1.x, 1.0 ));
+        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+        m = m*m; m = m*m;
+        vec3 x  = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h  = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+        vec3 g;
+        g.x  = a0.x  * x0.x  + h.x  * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
+      }
+
+      // soft rolling swells, unwarped -> the sea-like layer
+      float sea(vec2 p, float t) {
+        vec2 q = p * uFrequency * 0.75 + vec2(uSeed, uSeed * 0.7);
+        vec2 drift = vec2(t * 0.25, t * 0.45); // waves rolling toward the camera
+        float amp = 1.0;
+        float freq = 1.0;
+        float sum = 0.0;
+        float norm = 0.0;
+        for (int o = 0; o < 3; o++) {
+          float n = snoise(q * freq + drift * (0.7 + 0.3 * float(o)));
+          sum  += (0.5 + 0.5 * n) * amp;
+          norm += amp;
+          amp  *= 0.55;
+          freq *= 1.9;
+        }
+        return sum / norm;
+      }
+
+      // ridged fbm with domain warping: |noise| flipped -> pointy peaks,
+      // warping bends the ridges into curls
+      float organic(vec2 p, float t) {
+        vec2 q = p * uFrequency + vec2(uSeed * 1.3, uSeed);
+        vec2 drift = vec2(t * 0.35, t * 0.2);
+
+        // domain warp: displace the sample position with low-freq noise
+        vec2 w = vec2(
+          snoise(q * 0.55 + drift * 0.7),
+          snoise(q * 0.55 + vec2(7.3, -4.1) - drift * 0.6)
+        );
+        q += w * uWarp;
+
+        float amp = 1.0;
+        float freq = 1.0;
+        float sum = 0.0;
+        float norm = 0.0;
+        for (int o = 0; o < 4; o++) {
+          float n = snoise(q * freq + drift * (0.6 + 0.4 * float(o)));
+          float ridged = 1.0 - abs(n);      // pointy
+          ridged *= ridged;                  // sharpen the crease
+          float soft = 0.5 + 0.5 * n;       // watery
+          sum  += mix(soft, ridged, uRidge) * amp;
+          norm += amp;
+          amp  *= 0.5;
+          freq *= 2.1;
+        }
+        return sum / norm;
+      }
+
+      // blend of the two characters
+      float terrain(vec2 p, float t) {
+        return mix(organic(p, t), sea(p, t), uSeaBlend);
+      }
+
+      void main() {
+        float t = uTime * uSpeed;
+        vec2 p = position.xz + aJitter * uJitter;
+
+        float h = terrain(p, t);
+        vec3 pos = vec3(p.x, h * uAmplitude, p.y);
+
+        // approximate the surface normal with finite differences
+        float e = 0.35;
+        float hx = terrain(p + vec2(e, 0.0), t);
+        float hz = terrain(p + vec2(0.0, e), t);
+        vec3 normal = normalize(vec3((h - hx) * uAmplitude, e, (h - hz) * uAmplitude));
+
+        // project the undisplaced point to find where it sits on screen
+        vec4 baseClip = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        vec2 ndc = baseClip.xy / baseClip.w;
+
+        // --- autonomous scan line (screen-space band) -----------------
+        // vertical line compares x, horizontal line compares y
+        float ndcC = mix(ndc.x, ndc.y, uScanAxis);
+        float band = exp(-pow((ndcC - uScanPos) / uScanWidth, 2.0));
+        float scan = band * uScanAmp;
+        // lift particles on the line, with per-particle variation
+        pos.y += scan * uScanLift * (0.55 + 0.9 * aRand);
+
+        // --- mouse hover: displace a round area -----------------------
+        vec2 md = ndc - uMouse;
+        md.x *= uAspect; // keep the area circular on screen
+        float area = exp(-dot(md, md) / (uMouseRadius * uMouseRadius));
+        float hover = area * uMouseAmp;
+        pos.y += hover * uMouseLift * (0.55 + 0.9 * aRand);
+
+        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+
+        // --- monochrome shading ---------------------------------------
+        vec3 toLight = uLightPos - pos;
+        float lightDist = length(toLight);
+        float diffuse = max(dot(normal, normalize(toLight)), 0.0);
+        // pool of light near the camera, dying out with distance
+        float pool = exp(-lightDist / uLightRadius * 2.2);
+        // height accent so crests catch a little extra light
+        float crest = smoothstep(0.45, 1.0, h) * 0.35;
+
+        float shade = (0.025 + diffuse * pool * 1.6 + crest * pool) * uBrightness;
+
+        // exponential fog to pure black
+        float fogDist = length(mvPosition.xyz);
+        float fog = exp(-uFogDensity * fogDist * fogDist * 0.02);
+        shade *= fog;
+
+        // the scan line and hover area glow
+        shade += (scan * 0.55 + hover * 0.4) * (0.25 + 0.75 * fog);
+
+        vShade = shade * (0.8 + 0.4 * aRand);
+
+        gl_PointSize = uPointSize * (200.0 / -mvPosition.z) * (0.7 + 0.6 * aRand);
+        gl_PointSize = clamp(gl_PointSize, 0.5, uPointMax);
+      }
+    `;
+
+    const fragmentShader = /* glsl */`
+      precision highp float;
+      varying float vShade;
+
+      void main() {
+        // round points
+        vec2 uv = gl_PointCoord - 0.5;
+        if (dot(uv, uv) > 0.25) discard;
+        gl_FragColor = vec4(vec3(vShade), 1.0);
+      }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader,
+      fragmentShader,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+
+    // ----------------------------------------------------------------- sound
+    // ryoji ikeda-ish: sparse sine kick/bass polyrhythm, filtered noise
+    // clicks, thin high sine sweeps. All frequencies/times editable here.
+    const SOUND = {
+      bpm: 132,
+      master: -8,            // overall output, dB
+      kick: {
+        freq: 48,            // fundamental (Hz)
+        pitchDecay: 0.025,   // short pitch envelope -> punch
+        decay: 0.6,         // body length (s)
+        steps: 16,           // pattern length in 16ths
+        density: 0.28,       // how full the pattern is (0..1)
+        volume: -4,          // dB
+      },
+      bass: {
+        // Hz pool (A2, E2, B2, D2). NOTE: pure sines below ~80 Hz are physically
+        // inaudible on most laptop speakers — use headphones for sub bass
+        notes: [ 82.41, 73.42],
+        noteLength: '2n',    // how long the note is held
+        steps: 12,           // 12 vs 16 -> polyrhythm against the kick
+        density: 0.001,
+        volume: -4,
+        envelope: { attack: 0.005, decay: 0.08, sustain: 0.4, release: 0.3 },
+      },
+      click: {
+        filterType: 'bandpass', // 'lowpass' | 'highpass' | 'bandpass'
+        filterFreq: 6000,       // Hz
+        filterQ: 1.2,
+        duration: 1.6,         // burst length (s) = how long the envelope is held
+        quantize: '16n', //'16n'       // snap bursts to the grid; null = immediate
+        volume: -8,
+        envelope: { attack: 0.05, decay: 0.001, sustain: 0.1, release: 0.0 },
+      },
+      scan: {
+        // the high sine reuses the bass notes shifted up `octaveUp` octaves;
+        // vertical sweeps pick randomly from D/A, horizontal from E/B.
+        // it holds for the whole crossing: volume climbs volMin -> volMax
+        // on a logarithmic curve as the line travels
+        notesVertical:   [73.42, 110],     // D2, A2
+        notesHorizontal: [82.41, 123.47],  // E2, B2
+        octaveUp: 3,       // 6 octaves up: A2 -> 7040 Hz, D2 -> 4699 Hz
+        volMin: -40,       // dB when the line appears
+        volMax: -12,       // dB when it reaches the far edge
+        attack: 0.3,      // fade-in of the tone itself (s)
+        release: 0.08,     // fade-out after the line exits (s)
+        // gritty noise layer riding on the sweep, same timing + volume ramp.
+        // mix the two layers with sineMix / noiseMix (0..1 linear gain)
+        sineMix:  0.15,
+        noiseMix: 0.85,
+        noiseType: 'pink',          // softer, more textured than white
+        noiseFilterType: 'bandpass',
+        noiseFilterFreq: 4500,      // Hz
+        noiseFilterQ: 0.8,
+      },
+      hat: {
+        volume: -10,
+        filterFreq: 8000,  // highpass -> thin ikeda ticks
+        decayMin: 0.008,   // burst length range (s), randomized per hit
+        decayMax: 0.3,
+        velMin: 0.35,      // velocity range, randomized per hit
+        velMax: 1.0,
+      },
+    };
+
+    let audioReady = false;
+    let kickSynth, bassSynth, noiseSynth, scanSynth, scanNoise, hatSynth;
+    let clickFilter;
+    let kickPattern = [], bassPattern = [];
+    // 1 while that layer is sounding — drives the crosshair readout
+    const soundState = { k: 0, b: 0, s: 0 };
+
+    function genPattern(steps, density, forceFirst) {
+      const p = Array.from({ length: steps }, () => Math.random() < density);
+      if (forceFirst) p[0] = true;
+      return p;
+    }
+
+    async function initAudio() {
+      if (audioReady) return;
+      audioReady = true;
+      await Tone.start();
+
+      Tone.Transport.bpm.value = SOUND.bpm;
+      Tone.Destination.volume.value = SOUND.master;
+
+      kickSynth = new Tone.MembraneSynth({
+        pitchDecay: SOUND.kick.pitchDecay,
+        octaves: 6,
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.001, decay: SOUND.kick.decay, sustain: 0, release: 0.05 },
+        volume: SOUND.kick.volume,
+      }).toDestination();
+
+      bassSynth = new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { ...SOUND.bass.envelope },
+        volume: SOUND.bass.volume,
+      }).toDestination();
+
+      clickFilter = new Tone.Filter({
+        type: SOUND.click.filterType,
+        frequency: SOUND.click.filterFreq,
+        Q: SOUND.click.filterQ,
+      }).toDestination();
+      noiseSynth = new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { ...SOUND.click.envelope },
+        volume: SOUND.click.volume,
+      }).connect(clickFilter);
+
+      // holds at full level for as long as the sweep runs; volume is
+      // ramped every frame by the sweep animation
+      scanSynth = new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: SOUND.scan.attack, decay: 0, sustain: 1, release: SOUND.scan.release },
+        volume: SOUND.scan.volMin,
+      }).toDestination();
+
+      // gritty noise layer with the same timing as the sweep sine
+      const scanNoiseFilter = new Tone.Filter({
+        type: SOUND.scan.noiseFilterType,
+        frequency: SOUND.scan.noiseFilterFreq,
+        Q: SOUND.scan.noiseFilterQ,
+      }).toDestination();
+      scanNoise = new Tone.NoiseSynth({
+        noise: { type: SOUND.scan.noiseType },
+        envelope: { attack: SOUND.scan.attack, decay: 0, sustain: 1, release: SOUND.scan.release },
+        volume: SOUND.scan.volMin,
+      }).connect(scanNoiseFilter);
+
+      const hatFilter = new Tone.Filter({
+        type: 'highpass',
+        frequency: SOUND.hat.filterFreq,
+      }).toDestination();
+      hatSynth = new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.001, decay: SOUND.hat.decayMax, sustain: 0 },
+        volume: SOUND.hat.volume,
+      }).connect(hatFilter);
+
+      // hi-hat ticks: every 16th step, with random decay + velocity
+      new Tone.Loop((time) => {
+        const decay = SOUND.hat.decayMin + Math.random() * (SOUND.hat.decayMax - SOUND.hat.decayMin);
+        const vel   = SOUND.hat.velMin  + Math.random() * (SOUND.hat.velMax  - SOUND.hat.velMin);
+        hatSynth.envelope.decay = decay;
+        hatSynth.triggerAttackRelease(decay, time, vel);
+      }, '16n').start(0);
+
+      // expose for console debugging
+      window.__app.sound = { kickSynth, bassSynth, noiseSynth, scanSynth, scanNoise, hatSynth, clickFilter, soundState, SOUND };
+
+      kickPattern = genPattern(SOUND.kick.steps, SOUND.kick.density, true);
+      bassPattern = genPattern(SOUND.bass.steps, SOUND.bass.density, true);
+
+      // two loops with different pattern lengths -> polyrhythm;
+      // patterns occasionally regenerate for variation
+      let kStep = 0, bStep = 0;
+      new Tone.Loop((time) => {
+        if (kickPattern[kStep]) {
+          kickSynth.triggerAttackRelease(SOUND.kick.freq, '16n', time);
+          soundState.k = 1;
+          setTimeout(() => { soundState.k = 0; }, SOUND.kick.decay * 1000);
+        }
+        kStep = (kStep + 1) % SOUND.kick.steps;
+        if (kStep === 0 && Math.random() < 0.35) {
+          kickPattern = genPattern(SOUND.kick.steps, SOUND.kick.density, true);
+        }
+      }, '16n').start(0);
+      new Tone.Loop((time) => {
+        if (bassPattern[bStep]) {
+          const note = SOUND.bass.notes[Math.floor(Math.random() * SOUND.bass.notes.length)];
+          bassSynth.triggerAttackRelease(note, SOUND.bass.noteLength, time);
+          soundState.b = 1;
+          setTimeout(() => { soundState.b = 0; }, Tone.Time(SOUND.bass.noteLength).toSeconds() * 1000);
+        }
+        bStep = (bStep + 1) % SOUND.bass.steps;
+        if (bStep === 0 && Math.random() < 0.3) {
+          bassPattern = genPattern(SOUND.bass.steps, SOUND.bass.density, true);
+        }
+      }, '16n').start(0);
+
+      Tone.Transport.start();
+    }
+
+    // short filtered noise burst, optionally quantized to the grid
+    function triggerBurst() {
+      if (!audioReady || !noiseSynth) return;
+      const q = SOUND.click.quantize;
+      if (q && Tone.Transport.state === 'started') {
+        // after a tab switch nextSubdivision can point into the past or far
+        // ahead — only use it when it lands within the next couple of steps
+        const t = Tone.Transport.nextSubdivision(q);
+        const now = Tone.now();
+        const grid = Tone.Time(q).toSeconds();
+        if (t > now && t < now + grid * 2) {
+          noiseSynth.triggerAttackRelease(SOUND.click.duration, t);
+          return;
+        }
+      }
+      noiseSynth.triggerAttackRelease(SOUND.click.duration);
+    }
+
+    // parameters that re-roll themselves on every click
+    function rollSoundOnClick() {
+      if (!audioReady) return;
+      SOUND.click.filterFreq = 5000 + Math.random() * 3000;           // 5000-8000 Hz
+      SOUND.click.filterType = Math.random() < 0.5 ? 'bandpass' : 'highpass';
+      clickFilter.frequency.value = SOUND.click.filterFreq;
+      clickFilter.type = SOUND.click.filterType;
+      const d1 = 0.1 + Math.random() * 0.2;                           // 0.1-0.3 s
+      const d2 = 0.1 + Math.random() * 0.2;
+      SOUND.hat.decayMin = Math.min(d1, d2);
+      SOUND.hat.decayMax = Math.max(d1, d2);
+    }
+
+    // --------------------------------------------------------------- mouse
+    // crosshair coordinate UI + hover area target
+    const crossV = document.getElementById('cross-v');
+    const crossH = document.getElementById('cross-h');
+    const coordEl = document.getElementById('coord');
+    const soundEl = document.getElementById('soundstate');
+
+    const mouseNdc = { x: 0, y: 0 };
+    let mouseTargetAmp = 0;  // 1 while the mouse is over the page
+
+    function updatePointer(x, y) {
+      mouseNdc.x =  (x / window.innerWidth) * 2 - 1;
+      mouseNdc.y = -(y / window.innerHeight) * 2 + 1;
+      mouseTargetAmp = 1;
+
+      crossV.hidden = crossH.hidden = coordEl.hidden = soundEl.hidden = false;
+      crossV.style.transform = `translateX(${x}px)`;
+      crossH.style.transform = `translateY(${y}px)`;
+      // coordinates sit upper-left, sound state upper-right of the cross
+      coordEl.style.transform = `translate(${x - 10}px, ${y - 10}px) translate(-100%, -100%)`;
+      coordEl.textContent = `${Math.round(x)} : ${Math.round(y)}`;
+      soundEl.style.transform = `translate(${x + 10}px, ${y - 10}px) translateY(-100%)`;
+    }
+    function releasePointer() {
+      mouseTargetAmp = 0;
+      crossV.hidden = crossH.hidden = coordEl.hidden = soundEl.hidden = true;
+    }
+
+    // pointer events cover mouse and touch alike
+    window.addEventListener('pointermove', (ev) => updatePointer(ev.clientX, ev.clientY));
+    window.addEventListener('pointerdown', (ev) => updatePointer(ev.clientX, ev.clientY));
+    window.addEventListener('pointerup', (ev) => {
+      if (ev.pointerType === 'touch') releasePointer();  // finger lifted
+    });
+    document.addEventListener('mouseleave', releasePointer);
+
+    // click: invert flash (with its own look), re-roll all generative
+    // variables + seed, fire the noise burst
+    let flashing = false;
+    renderer.domElement.addEventListener('click', async () => {
+      await initAudio();   // audio must start from a user gesture
+      triggerBurst();
+      rollGenerative();
+      rollSoundOnClick();
+
+      if (flashing) return;
+      flashing = true;
+      const prev = {
+        brightness: uniforms.uBrightness.value,
+        pointSize:  uniforms.uPointSize.value,
+        pointMax:   uniforms.uPointMax.value,
+        fog:        uniforms.uFogDensity.value,
+      };
+      uniforms.uBrightness.value *= FLASH.brightness;
+      uniforms.uPointSize.value  *= FLASH.pointSize;
+      // the clamp ceiling must scale too, or bigger points get cut off at it
+      uniforms.uPointMax.value   *= FLASH.pointSize;
+      uniforms.uFogDensity.value *= FLASH.fog;
+      renderer.domElement.style.filter = 'invert(1)';
+      setTimeout(() => {
+        renderer.domElement.style.filter = '';
+        uniforms.uBrightness.value = prev.brightness;
+        uniforms.uPointSize.value  = prev.pointSize;
+        uniforms.uPointMax.value   = prev.pointMax;
+        uniforms.uFogDensity.value = prev.fog;
+        flashing = false;
+      }, FLASH.ms);
+    });
+
+    // ------------------------------------------------------------- animate
+    const clock = new THREE.Clock();
+
+    // autonomous scan sweeps: full crossings in a random axis/direction
+    const sweep = { active: false, from: 0, to: 0, dur: 1, t: 0 };
+    let nextSweepAt = 1.5 + Math.random() * 2;
+    let sweepToneFreq = 0;  // remembered so the tone can resume after a tab switch
+
+    // pause all sound while the tab is in the background
+    document.addEventListener('visibilitychange', () => {
+      if (!audioReady) return;
+      if (document.hidden) {
+        Tone.Transport.pause();
+        Tone.Destination.mute = true;
+        if (scanSynth) scanSynth.triggerRelease();
+        if (scanNoise) scanNoise.triggerRelease();
+        soundState.s = 0;
+      } else {
+        Tone.Destination.mute = false;
+        Tone.Transport.start();
+        // if a sweep was mid-crossing, bring its tone back
+        if (sweep.active && scanSynth && sweepToneFreq) {
+          scanSynth.triggerAttack(sweepToneFreq);
+          scanNoise.triggerAttack();
+          soundState.s = 1;
+        }
+      }
+    });
+
+    renderer.setAnimationLoop(() => {
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const now = clock.elapsedTime;
+      uniforms.uTime.value = now;
+
+      // start a new sweep?
+      if (!sweep.active && now >= nextSweepAt) {
+        sweep.active = true;
+        sweep.t = 0;
+        sweep.dur = SCAN.minDur + Math.random() * (SCAN.maxDur - SCAN.minDur);
+        const dir = Math.random() < 0.5 ? 1 : -1;      // left/right or up/down
+        sweep.from = -1.3 * dir;
+        sweep.to   =  1.3 * dir;
+        uniforms.uScanAxis.value = Math.random() < 0.5 ? 0 : 1;
+        // thin sine held for the whole crossing; pitch = a bass note from
+        // the axis pool, shifted up octaveUp octaves
+        if (audioReady && scanSynth) {
+          const pool = uniforms.uScanAxis.value === 0
+            ? SOUND.scan.notesVertical
+            : SOUND.scan.notesHorizontal;
+          const base = pool[Math.floor(Math.random() * pool.length)];
+          sweepToneFreq = base * Math.pow(2, SOUND.scan.octaveUp);
+          scanSynth.volume.value = SOUND.scan.volMin + Tone.gainToDb(SOUND.scan.sineMix);
+          scanSynth.triggerAttack(sweepToneFreq);
+          scanNoise.volume.value = SOUND.scan.volMin + Tone.gainToDb(SOUND.scan.noiseMix);
+          scanNoise.triggerAttack();
+          soundState.s = 1;
+        }
+      }
+      // run the sweep
+      if (sweep.active) {
+        sweep.t += dt;
+        const p = Math.min(sweep.t / sweep.dur, 1);
+        uniforms.uScanPos.value = sweep.from + (sweep.to - sweep.from) * p;
+        // fade in/out at the edges of the crossing
+        uniforms.uScanAmp.value = Math.min(1, Math.min(p, 1 - p) / 0.12);
+        // volume climbs volMin -> volMax over the crossing, log curve;
+        // sine and noise layers ride the same ramp, mixed independently
+        if (audioReady && scanSynth) {
+          const curve = Math.log10(1 + 9 * p); // 0 -> 1, fast rise then flattening
+          const ramp = SOUND.scan.volMin + (SOUND.scan.volMax - SOUND.scan.volMin) * curve;
+          scanSynth.volume.value = ramp + Tone.gainToDb(SOUND.scan.sineMix);
+          scanNoise.volume.value = ramp + Tone.gainToDb(SOUND.scan.noiseMix);
+        }
+        if (p >= 1) {
+          sweep.active = false;
+          uniforms.uScanAmp.value = 0;
+          nextSweepAt = now + SCAN.minWait + Math.random() * (SCAN.maxWait - SCAN.minWait);
+          if (audioReady && scanSynth) {
+            scanSynth.triggerRelease();
+            scanNoise.triggerRelease();
+            soundState.s = 0;
+          }
+        }
+      }
+
+      // live sound-state readout next to the crosshair
+      soundEl.textContent = `k: ${soundState.k} b: ${soundState.b} s: ${soundState.s}`;
+
+      // ease the hover area toward the mouse
+      const k = 1 - Math.exp(-dt * 6.0);
+      uniforms.uMouse.value.x += (mouseNdc.x - uniforms.uMouse.value.x) * k;
+      uniforms.uMouse.value.y += (mouseNdc.y - uniforms.uMouse.value.y) * k;
+      uniforms.uMouseAmp.value += (mouseTargetAmp - uniforms.uMouseAmp.value) * k;
+
+      // slight camera tilt toward the pointer (rides the same smoothing,
+      // scaled by amp so it eases back to neutral when the pointer leaves)
+      const tiltAmp = uniforms.uMouseAmp.value;
+      camera.quaternion.copy(cameraBaseQuat);
+      camera.rotateY(THREE.MathUtils.degToRad(-TILT.x * uniforms.uMouse.value.x * tiltAmp));
+      camera.rotateX(THREE.MathUtils.degToRad( TILT.y * uniforms.uMouse.value.y * tiltAmp));
+
+      renderer.render(scene, camera);
+    });
+
+    // debug handle
+    window.__app = { renderer, scene, camera, uniforms };
+
+    // control surface for the host page (same-origin): lets the portfolio's
+    // mute/unmute button start and silence the audio
+    window.__audioAPI = {
+      start: () => initAudio(),
+      setMuted: (m) => { if (window.Tone && Tone.Destination) Tone.Destination.mute = !!m; },
+      get ready() { return audioReady; },
+    };
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      uniforms.uAspect.value = window.innerWidth / window.innerHeight;
+    });
+  </script>
+</body>
+</html>
