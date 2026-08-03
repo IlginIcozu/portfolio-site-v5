@@ -2071,6 +2071,119 @@ html.js.is-loading .cue { opacity: 0; }
 }
 
 /* documentation accordion */
+/* ── learn MOPs ────────────────────────────────────────────────────────── */
+
+/* each lesson is an anchor target for the hero's "Learn MOPs" button, so it needs to
+   clear the fixed header — same value the works use */
+.learn-lesson { scroll-margin-top: 5.5rem; }
+
+.learn-lesson + .learn-lesson {
+  margin-top: clamp(3.4rem, 8vw, 6rem);
+  padding-top: clamp(3.4rem, 8vw, 6rem);
+  border-top: 1px solid var(--line-soft);
+}
+
+.learn-index {
+  display: block;
+  margin-bottom: .5rem;
+  color: var(--muted-2);
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+.learn-title {
+  margin: 0 0 clamp(1.4rem, 3vw, 2.2rem);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* full width of the column, deliberately not full height — the patcher wants a
+   wide, shallow stage, and the page has to keep scrolling past it */
+.learn-embed {
+  position: relative;
+  width: 100%;
+  height: clamp(520px, 62vh, 760px);
+  background: #0b0b0b;
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+
+.learn-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* the copy sits under the network, so the visitor meets the patch first and reads
+   about it afterwards */
+.learn-note {
+  max-width: 62ch;
+  color: var(--muted);
+  margin: clamp(1.4rem, 3vw, 2.2rem) 0 0;
+}
+
+.learn-note strong { color: var(--fg); }
+
+/* ── lesson "Learn more" panel ──────────────────────────────────────────
+   Same disclosure mechanics as the works on the Sound page: a grid whose single
+   row animates from 0fr to 1fr, so there is no max-height guess and no jump.
+   `visibility` is what actually removes the collapsed copy from the tab order and
+   the accessibility tree; it is delayed on close so the collapse can be seen. */
+
+.learn-more { margin-top: clamp(1.2rem, 2.6vw, 1.7rem); }
+
+.lesson-long {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.75s var(--ease-io);
+}
+
+.lesson-long-inner {
+  overflow: hidden;
+  min-height: 0;
+  visibility: hidden;
+  transition: visibility 0s linear 0.75s;
+}
+
+.learn-lesson.is-open .lesson-long { grid-template-rows: 1fr; }
+
+.learn-lesson.is-open .lesson-long-inner {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.lesson-long-body { padding-top: clamp(1.4rem, 3vw, 2rem); }
+
+.lesson-long-body .lesson-caveat {
+  margin-top: 1.6rem;
+  color: var(--muted-2);
+  font-size: 0.92rem;
+}
+
+.lesson-long-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: clamp(1.2rem, 2.6vw, 1.8rem);
+  margin-top: clamp(1.2rem, 2.6vw, 1.8rem);
+  border-top: 1px solid var(--line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-long,
+  .lesson-long-inner { transition: none; }
+}
+
+/* the app degrades to 720px wide; below that give it height back instead */
+@media (max-width: 760px) {
+  .learn-embed { height: clamp(480px, 78vh, 640px); }
+}
+
 .docs-note {
   max-width: 62ch;
   color: var(--muted);
@@ -2454,12 +2567,28 @@ html.js.is-loading .cue { opacity: 0; }
 
 /* ── page background video (MOPs) ──────────────────────────────────────── */
 
+/* The hero image belongs to the top of the *document*, not to the viewport. It was
+   position:fixed, which pinned it to the screen and carried it down the page behind
+   every section. Absolute against the initial containing block anchors it at the
+   document origin instead, so it scrolls away like any other content and the page
+   colour is what shows underneath afterwards.
+
+   Only mops.html uses this layer, so nothing else is affected. z-index stays 0, which
+   keeps it exactly where it was in the stack: above .bg-sys, below #page. */
 .page-bgvid {
-  position: fixed;
-  inset: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  height: 100svh;          /* svh so mobile browser chrome cannot cause a jump */
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  /* fade the last stretch out so the end of the image is not a hard horizontal seam
+     against the page colour — same technique .bg-sys already uses */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 68%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 68%, rgba(0, 0, 0, 0) 100%);
 }
 
 .page-bgvid video,

@@ -1118,6 +1118,96 @@
     });
   }
 
+  /* ── lesson "Learn more" panels (MOPs Lab) ───────────────────────────── */
+
+  function initLessonToggles() {
+    const toggles = document.querySelectorAll("[data-lesson-toggle]");
+    if (!toggles.length) return;
+
+    const OPEN_LABEL = "Learn more +";
+    const CLOSE_LABEL = "Close −";
+
+    function setOpen(art, btn, open) {
+      // only one long block open at a time
+      if (open) {
+        document.querySelectorAll(".learn-lesson.is-open").forEach((other) => {
+          if (other === art) return;
+          other.classList.remove("is-open");
+          const b = other.querySelector("[data-lesson-toggle]");
+          if (b) { b.setAttribute("aria-expanded", "false"); b.textContent = OPEN_LABEL; }
+        });
+      }
+      art.classList.toggle("is-open", open);
+      btn.setAttribute("aria-expanded", String(open));
+      // the trigger doubles as a close control, so it is never out of reach below a
+      // long block of text
+      btn.textContent = open ? CLOSE_LABEL : OPEN_LABEL;
+      // the page just changed height — let the scroll-driven bits re-measure
+      setTimeout(() => window.ScrollTrigger && ScrollTrigger.refresh(), 800);
+    }
+
+    toggles.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const art = btn.closest(".learn-lesson");
+        if (!art) return;
+        const open = !art.classList.contains("is-open");
+        setOpen(art, btn, open);
+        // move focus into the panel so keyboard and screen reader users do not
+        // lose their place; back to the trigger on close, below
+        if (open) art.querySelector("[data-lesson-close]")?.focus();
+      });
+    });
+
+    document.querySelectorAll("[data-lesson-close]").forEach((closeBtn) => {
+      closeBtn.addEventListener("click", () => {
+        const art = closeBtn.closest(".learn-lesson");
+        const btn = art && art.querySelector("[data-lesson-toggle]");
+        if (!art || !btn) return;
+        setOpen(art, btn, false);
+        btn.focus();
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const art = document.querySelector(".learn-lesson.is-open");
+      if (!art) return;
+      const btn = art.querySelector("[data-lesson-toggle]");
+      if (!btn) return;
+      setOpen(art, btn, false);
+      btn.focus();
+    });
+  }
+
+  /* ── lesson embeds: only draw the one you can see ────────────────────── */
+
+  function initLessonEmbedVisibility() {
+    const frames = document.querySelectorAll(".learn-embed iframe");
+    if (!frames.length || !("IntersectionObserver" in window)) return;
+
+    // Each lesson runs a canvas loop over every operator in its patch. A browser only
+    // throttles an iframe it has stopped rendering entirely, so a lesson just below the
+    // fold keeps redrawing at full rate for nobody. Tell it to stop; it stays silent
+    // about it if it is an older build that does not listen.
+    const tell = (frame, visible) => {
+      try { frame.contentWindow?.postMessage({ type: "mopslab:visibility", visible }, "*"); }
+      catch (err) {}
+    };
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => tell(e.target, e.isIntersecting));
+    }, { rootMargin: "200px 0px" });   // wake it just before it is reached
+
+    frames.forEach((f) => {
+      io.observe(f);
+      // an embed that loads while already off screen never gets an entry until it moves
+      f.addEventListener("load", () => {
+        const r = f.getBoundingClientRect();
+        tell(f, r.bottom > -200 && r.top < window.innerHeight + 200);
+      });
+    });
+  }
+
   /* ── work covers: expand the full work under its banner ──────────────── */
 
   function initWorkToggles() {
@@ -2014,6 +2104,8 @@
   initCoverPosters();
   initWorkToggles();
   initDocsAccordion();
+  initLessonToggles();
+  initLessonEmbedVisibility();
   initCursor();
   initMagnetic();
   initTilt();

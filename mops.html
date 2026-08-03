@@ -20,9 +20,14 @@
       var d = document.documentElement;
       d.classList.add("js", "is-loading");
       try {
-        if (sessionStorage.getItem("ii-veil")) { d.classList.add("is-veiled"); sessionStorage.removeItem("ii-veil"); }
-        if (sessionStorage.getItem("ii-seen")) { d.classList.add("no-preloader"); }
-      } catch (e) { }
+        if (sessionStorage.getItem("ii-veil")) {
+          d.classList.add("is-veiled");
+          sessionStorage.removeItem("ii-veil");
+        }
+        if (sessionStorage.getItem("ii-seen")) {
+          d.classList.add("no-preloader");
+        }
+      } catch (e) {}
     })();
   </script>
 </head>
@@ -55,7 +60,8 @@
   <div class="progress" aria-hidden="true"><span class="progress-bar"></span></div>
 
   <header class="site-header">
-    <a class="brand magnetic" href="index.html"><span class="brand-dot" aria-hidden="true"></span><span class="brand-name" data-text="Ilgın İçözü">Ilgın İçözü</span></a>
+    <a class="brand magnetic" href="index.html"><span class="brand-dot" aria-hidden="true"></span><span
+        class="brand-name" data-text="Ilgın İçözü">Ilgın İçözü</span></a>
     <nav class="main-nav" aria-label="Primary">
       <a href="sound.html"><sup>01</sup><span data-scramble>Sound</span></a>
       <a href="immersive-experience.html"><sup>02</sup><span data-scramble>Visual</span></a>
@@ -90,8 +96,8 @@
       <!-- ── hero: what it is + get it ─────────────────────────────────── -->
       <section class="page-hero wrap mops-hero">
         <h1 class="mops-logo" data-intro-fade>
-          <img src="assets/MOPS/mops-lockup.png"
-            alt="MOPs, Modular Operators" width="646" height="485" decoding="async" />
+          <img src="assets/MOPS/mops-lockup.png" alt="MOPs, Modular Operators" width="646" height="485"
+            decoding="async" />
         </h1>
         <p class="mops-tagline" data-intro-fade>A modular synthesis toolkit built entirely inside
           TouchDesigner. Audio operators that patch together like Eurorack modules.</p>
@@ -99,6 +105,7 @@
         <div class="mops-actions" data-intro-fade>
           <a class="btn btn--primary mono" href="https://www.patreon.com/c/ilginicozu" target="_blank"
             rel="noopener noreferrer">Get MOPs on Patreon ↗</a>
+          <a class="btn mono" href="#lesson-01">Learn MOPs ↓</a>
           <a class="btn mono" href="#docs">Documentation ↓</a>
         </div>
         <div class="page-rule" data-intro-rule></div>
@@ -154,6 +161,219 @@
         </div>
       </section>
 
+      <!-- ── learn ─────────────────────────────────────────────────────── -->
+      <section class="section-block wrap" id="learn-mops" style="scroll-margin-top: 5.5rem;">
+        <div class="section-head">
+          <h2 data-split>Learn MOPs</h2>
+          <span class="section-count mono" data-reveal>03 lessons</span>
+        </div>
+
+        <article class="learn-lesson" id="lesson-01">
+          <span class="learn-index mono" data-reveal>[ 01 ]</span>
+          <h3 class="learn-title" data-reveal>Simple Melodic Network</h3>
+          
+          <div class="learn-embed" data-reveal>
+            <iframe src="assets/MOPS/mops-lab-lesson-01.html" title="MOPs Lab, lesson 01, first voice" loading="lazy"
+              allow="autoplay" scrolling="no"></iframe>
+          </div>
+
+          <p class="learn-note" data-reveal> Click to "+" button or double click to add operators. Hit delete on your keyboard to remove.</p>
+          <p class="learn-note" data-reveal>
+            The smallest patch in MOPs that plays a melody: a <strong>clock</strong>, a <strong>step sequencer</strong>,
+            an <strong>oscillator</strong>,
+            an <strong>amplitude</strong>, an <strong>envelope</strong>, a <strong>lowpass filter</strong> and an
+            <strong>audio out</strong>. Try changing the parameters,
+            or adding new operators. Use the <strong>Clear All</strong> button to start from nothing and the
+            <strong>guide</strong> to
+            rebuild the network. You can always return to the default state if you get lost.
+          </p>
+
+          <button class="btn learn-more mono" type="button" data-lesson-toggle aria-expanded="false"
+            aria-controls="lesson-01-long" data-reveal>Learn more +</button>
+
+          <!-- collapsed by CSS, so it is correct before any script runs and for search engines -->
+          <div class="lesson-long" id="lesson-01-long">
+            <div class="lesson-long-inner">
+              <div class="lesson-long-body project-text">
+
+                <p><strong>The operators here have fewer knobs than the
+                    real ones, on purpose.Follow the signal from left to right. 
+                    Hover over the inlets/outlets to read the names.</strong></p>
+
+                <p><strong>Clock</strong> keeps time and does nothing else. It sends a pulse on every
+                  1/16 note, so at 120 BPM you get eight pulses a second. Nothing else in the patch has
+                  an opinion about tempo. Take the clock away and everything stops.</p>
+
+                <p><strong>Step Sequencer</strong> advances one step per pulse and puts out two
+                  different things on two red ports. The gate is a trigger: on/off. The cd is
+                  a level: this step's value, held until the next step. Both are <strong>control data</strong>, which is
+                  why both ports and both cables are <strong>red</strong>, and why both labels contain "cd".</p>
+
+                <p><strong>Oscillator</strong> is the only operator making sound, and it never stops.
+                  Everything after it decides whether you actually hear anything. The sequencer's cd
+                  arrives at its pitch input, where 1.0 means exactly one octave up. That is the modular
+                  1 volt per octave convention, and it is literally how <strong>Oscillator MOP</strong>
+                  works: a pitch of 0 gives you the base frequency, 1 gives an octave, and 1/12
+                  gives a semitone.</p>
+
+                <p><strong>Envelope</strong> turns a trigger into a shape. When a gate arrives its output
+                  rises to 1 over the attack time and falls back to 0 over the decay time,
+                  exponentially, the way a plucked string decays. In TouchDesigner this is the <strong>Simple Env MOP</strong>
+                  , which fires whenever an incoming signal rises across its threshold.</p>
+
+                <p><strong>Amplitude</strong> multiplies the audio coming in by whatever its cd input
+                  tells it. This is the reason you hear notes instead of a drone, remove it and experiment.</p>
+
+                <p><strong>Lowpass Filter</strong> removes the frequencies above its cutoff and leaves
+                  the ones below. Sweep the cutoff down and a bright saw turns dark. Its cd input lets a
+                  control signal push the cutoff around, and the CD Amount slider decides how far.</p>
+
+                <p><strong>Audio Out</strong> ends the chain. One per patch, so sum your sounds first
+                  and then send. If a MOPs patch is ever silent, this is the documented first place to
+                  look. Is it on, and is it turned up?</p>
+
+                <p>That is the entire rule set. <strong>Red is control data, white is audio, and every
+                    control data port has "cd" in its label.</strong> You can read any MOPs patch with
+                  it.</p>
+
+              </div>
+              <div class="lesson-long-foot">
+                <button class="work-close mono" type="button" data-lesson-close>[ Close − ]</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="learn-lesson" id="lesson-02">
+          <span class="learn-index mono" data-reveal>[ 02 ]</span>
+          <h3 class="learn-title" data-reveal>Drum Network</h3>
+
+          <div class="learn-embed" data-reveal>
+            <iframe src="assets/MOPS/mops-lab-lesson-02.html" title="MOPs Lab, lesson 02, drum network" loading="lazy"
+              allow="autoplay" scrolling="no"></iframe>
+          </div>
+
+          <p class="learn-note" data-reveal>
+            One <strong>clock</strong>, three <strong>step sequencers</strong>, three <strong>drum voices</strong>, a <strong>mixer</strong> and an <strong>audio out</strong>. Create new
+            patterns by changing the sequences, or use the mixer to take a drum part out and bring it
+            back in. Use the <strong>Clear All</strong> button to start from nothing and the
+            <strong>guide</strong> to
+            rebuild the network. You can always return to the default state if you get lost.
+          </p>
+
+          <button class="btn learn-more mono" type="button" data-lesson-toggle aria-expanded="false"
+            aria-controls="lesson-02-long" data-reveal>Learn more +</button>
+
+          <div class="lesson-long" id="lesson-02-long">
+            <div class="lesson-long-inner">
+              <div class="lesson-long-body project-text">
+
+                <p><strong>Same rules, three voices.</strong> This patch has no oscillator, no
+                  amplitude and no filter, because a drum voice already has all of that packed inside
+                  it. What it does have is more of everything else: one clock driving three separate
+                  sequencers, each with its own pattern.</p>
+
+                <p><strong>One clock, three sequencers.</strong> An operator's output can feed as many
+                  inputs as you like, so a single clock keeps all three patterns locked together. They
+                  each advance on the same pulse. What differs is which steps have gates on.</p>
+
+                <p><strong>Two cables per drum.</strong> Each sequencer sends two things to its voice.
+                  The cd gate triggers the hit. The cd output sets the
+                  velocity.</p>
+
+                <p><strong>Kick</strong> is a short tone whose pitch drops fast. That drop is the entire
+                  trick. Start it 70 Hz above 50 Hz and let it fall in 35 milliseconds and your ear
+                  hears a kick drum rather than a beep. Pitch Env controls how far above it starts, Amp
+                  Decay controls how long it rings, and the waveform switch moves you from a round sine
+                  to a grittier triangle to a harder wavetable body.</p>
+
+                <p><strong>Snare / Hat</strong> is two voices in one operator, since drums are almost
+                  always sequenced as a pair. The snare is a short tuned body mixed with a burst of
+                  white noise, and the noise is the snares. The hat is the same noise, filtered much
+                  brighter and cut off much faster: a few tens of milliseconds is a closed hat, a few
+                  hundred is an open one. It takes four control cables and puts
+                  out two separate audio signals.</p>
+
+                <p><strong>4ch Mixer</strong> is the operator that lets a patch have more than one
+                  voice. Four audio inputs, four levels, one output. Balance is real work here.</p>
+
+                <p><strong>Audio Out.</strong> One per patch, as always. This is exactly the case the
+                  MOPs documentation is warning about when it says to sum through a mixer first rather
+                  than scattering audio outs around a network.</p>
+
+              </div>
+              <div class="lesson-long-foot">
+                <button class="work-close mono" type="button" data-lesson-close>[ Close − ]</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="learn-lesson" id="lesson-03">
+          <span class="learn-index mono" data-reveal>[ 03 ]</span>
+          <h3 class="learn-title" data-reveal>Full Patch</h3>
+
+          <div class="learn-embed" data-reveal>
+            <iframe src="assets/MOPS/mops-lab-lesson-03.html" title="MOPs Lab, lesson 03, full patch" loading="lazy"
+              allow="autoplay" scrolling="no"></iframe>
+          </div>
+
+          <p class="learn-note" data-reveal>
+            Both earlier patches at once, plus two operators. A <strong>stereo delay</strong> throws tempo locked echoes off the melody, and two
+            <strong>sidechains</strong> duck the melody and the hats every time the kick fires, from the kick's gate
+            rather than from its sound. One <strong>clock</strong>, four <strong>sequencers</strong>, four <strong>voices</strong>, one <strong>mixer</strong>, one <strong>audio
+            out</strong>. Clear the patch and build your own. With some clever thinking there is an entire song
+            in these operators.
+          </p>
+
+          <button class="btn learn-more mono" type="button" data-lesson-toggle aria-expanded="false"
+            aria-controls="lesson-03-long" data-reveal>Learn more +</button>
+
+          <div class="lesson-long" id="lesson-03-long">
+            <div class="lesson-long-inner">
+              <div class="lesson-long-body project-text">
+
+                <p><strong>This is the first patch here that sounds like a piece of music rather than a
+                    demonstration.</strong> The melody chain from the first lesson and the drum network
+                  from the second are both running, off the same clock, summed through one mixer.</p>
+
+                <p><strong>Stereo Delay</strong> repeats the melody, quieter each time, locked to the
+                  tempo. Left and Right each hold their own division of the bar: 1/4 is a beat, 1/16 is
+                  one sequencer step, and 1/3 and 1/6 are the triplet divisions. Set both sides the same
+                  and the echoes sit in the middle. Set them differently, 1/8 against 1/4 is the default
+                  here, and the repeats spread out and cross each other. Notice that nothing is patched
+                  into it except audio. It follows the clock because it reads the tempo the way every
+                  tempo synced thing in TouchDesigner does, from the project's own clock rather than
+                  from a cable. Move the BPM and the echoes move with it.</p>
+
+                <p><strong>Sidechain</strong> ducks whatever passes through it every time a gate
+                  arrives, then lets it back up. This is the pumping under almost every dance record,
+                  and the thing worth understanding is where its trigger comes from. It is the same gate
+                  that fires the kick, not the kick's audio. A real sidechain compressor listens to
+                  another signal's loudness and needs a threshold. The trigger version needs neither,
+                  and because it is driven by the same red cable as the drum it locks perfectly. Duck
+                  sets how far down it goes. Decay sets how long the climb back takes, which is what
+                  makes it groove instead of stutter.</p>
+
+                <p><strong>Follow the kick sequencer's gate cable.</strong> It leaves one red port and
+                  arrives in three places: the kick, the melody's sidechain, and the hats' sidechain.
+                  One output can feed as many inputs as you like, and this is the patch where that stops
+                  being trivia and starts being the arrangement.</p>
+
+                <p><strong>Two things about order.</strong> The sidechain sits after the delay, so the
+                  echoes pump too. Put it before and the delay simply fills back in the gaps the ducking
+                  just made. And both sidechains sit before the mixer, because ducking after the sum
+                  would duck everything, including the kick that caused it.</p>
+
+              </div>
+              <div class="lesson-long-foot">
+                <button class="work-close mono" type="button" data-lesson-close>[ Close − ]</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
       <!-- ── documentation ─────────────────────────────────────────────── -->
       <section class="section-block wrap" id="docs" style="scroll-margin-top: 5.5rem;">
         <div class="section-head">
@@ -180,8 +400,10 @@
                   in the Family tab. MOPs is built with
                   <a href="https://github.com/dotsimulate/TDFam" target="_blank" rel="noopener noreferrer">TDFam</a>,
                   an open-source TouchDesigner operator-family framework created by Lyell Hintz /
-                  dotsimulate and Dan Molnar / function.str, licensed under Apache-2.0. See the included LICENSE and NOTICE files for details. 
-                  TouchDesigner is a product of Derivative Inc.; MOPs is not affiliated with or endorsed by Derivative. </p>
+                  dotsimulate and Dan Molnar / function.str, licensed under Apache-2.0. See the included LICENSE and
+                  NOTICE files for details.
+                  TouchDesigner is a product of Derivative Inc.; MOPs is not affiliated with or endorsed by Derivative.
+                </p>
                 <p>Once loaded, you can start building your first sound patch. Worked examples are
                   provided in <strong>examples.toe</strong>, included with MOPs v0.1.0.</p>
               </div>
@@ -218,7 +440,7 @@
                     as a CHOP reference to a specific parameter, except it happens by wiring the ins
                     and outs rather than by writing an expression.</li>
                   <li><strong>Operator shade.</strong> In the operator window, the <strong>audio
-                    operators are slightly darker</strong> than the control-data ones.</li>
+                      operators are slightly darker</strong> than the control-data ones.</li>
                 </ol>
                 <h4>Use only one audio out</h4>
                 <p>Don't scatter multiple audio-out operators across your patch. Sum your different
@@ -348,8 +570,8 @@
 
       <!-- ── get it ────────────────────────────────────────────────────── -->
       <section class="section-block wrap mops-cta" id="get-mops">
-        <img class="mops-cta-icon" src="assets/MOPS/mops-icon.svg" alt="" width="232" height="116"
-          loading="lazy" decoding="async" />
+        <img class="mops-cta-icon" src="assets/MOPS/mops-icon.svg" alt="" width="232" height="116" loading="lazy"
+          decoding="async" />
         <a class="btn btn--primary mono" href="https://www.patreon.com/c/ilginicozu" target="_blank"
           rel="noopener noreferrer" data-reveal>Get MOPs on Patreon ↗</a>
       </section>
@@ -378,4 +600,4 @@
   <script src="js/app.js"></script>
 </body>
 
-</html>
+</html>
