@@ -1,0 +1,3 @@
+# Self-hosted copies of IPFS works: keep them byte-for-byte identical to the
+# originals at their CIDs, so never normalise their line endings.
+assets/ipfs/** -text

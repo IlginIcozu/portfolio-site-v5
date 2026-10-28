@@ -408,7 +408,9 @@ window.SITE_DATA = {
       coverWide: true,
       media: {
         type: "iframe-src",
-        src: "https://ipfs.io/ipfs/QmeuY1wsVt5DzNVxBBQazqvJGwjhw6e4RkqLZtWq393d17/",
+        // Self-hosted copy of the IPFS directory of the same CID. The ipfs.io gateway
+        // was retired as a plain HTTP gateway (Sunset: 2026-09-21) and now answers 429.
+        src: "assets/ipfs/QmeuY1wsVt5DzNVxBBQazqvJGwjhw6e4RkqLZtWq393d17/index.html",
         title: "GenerativeProject",
         contained: true,
         mediaClass: "media-small",
@@ -431,7 +433,8 @@ window.SITE_DATA = {
       title: "",
       media: {
         type: "iframe-src",
-        src: "https://ipfs.io/ipfs/QmatX7h1qh8t7VXvkRtc2FouMR8HsnhtpdYqwY32pDhvdn/",
+        // Self-hosted copy of the IPFS directory of the same CID (see above).
+        src: "assets/ipfs/QmatX7h1qh8t7VXvkRtc2FouMR8HsnhtpdYqwY32pDhvdn/index.html",
         title: "GenerativeProject",
         interactive: true
       },
